@@ -108,4 +108,4 @@ dist
 .tern-port
 
 # Built lib
-lib/
+# lib/
