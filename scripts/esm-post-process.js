@@ -7,7 +7,7 @@ const path = require('path');
 const glob = require('glob');
 const replaceStream = require('replacestream');
 
-glob('lib/**/*.js', (_, filePaths) => {
+glob.glob('lib/**/*.js', (_, filePaths) => {
   for (const filePath of filePaths) {
     const parts = filePath.split('.');
     parts.pop();

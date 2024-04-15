@@ -1,28 +1,17 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import type {
-  parse as graphqlParse,
-  validate as graphqlValidate,
-  execute as graphqlExecute,
-  subscribe as graphqlSubscribe,
-  specifiedRules as graphqlSpecifiedRules,
-  ExecutionArgs,
-  ValidationRule,
   DocumentNode,
+  execute as graphqlExecute,
+  parse as graphqlParse,
+  specifiedRules as graphqlSpecifiedRules,
+  subscribe as graphqlSubscribe,
+  validate as graphqlValidate,
+  ValidationRule,
 } from 'graphql';
-import type {
-  CreateRequestHandlerOptions,
-  PostGraphilePlugin,
-} from 'postgraphile';
+import type { CreateRequestHandlerOptions, PostGraphilePlugin } from 'postgraphile';
 
-import { createHandler, Handler, TOKEN_HEADER_KEY } from 'graphql-sse';
-
-// copied from https://github.com/graphile/postgraphile/blob/55bff41460b113481c8161ef8f178f5af0a17df3/src/postgraphile/pluginHook.ts#L21-L25
-// TODO: export from postgraphile or find if already exported?
-type PluginHookFn = <TArgument, TContext = Record<string, any>>(
-  hookName: string,
-  argument: TArgument,
-  context?: TContext,
-) => TArgument;
+import { createHandler, Handler, OperationArgs, Request, TOKEN_HEADER_KEY } from 'graphql-sse';
+import { PluginHookFn } from 'postgraphile/build/postgraphile/pluginHook';
 
 let eventStreamRoute = '',
   handler: Handler = () => {
@@ -97,6 +86,7 @@ const GraphQLSSEPlugin: PostGraphilePlugin = {
       ValidationRule[]
     >();
 
+    // @ts-ignore
     handler = createHandler<IncomingMessage, ServerResponse>({
       execute,
       subscribe,
@@ -110,15 +100,15 @@ const GraphQLSSEPlugin: PostGraphilePlugin = {
           dynamicValidationRulesForDocument.delete(document);
         }
       },
-      async onSubscribe(req, res, params) {
+      async onSubscribe(req: Request<IncomingMessage, ServerResponse>, params) {
         const context = await withPostGraphileContextFromReqRes(
-          req,
-          res,
+          req.raw,
+          req.context,
           { singleStatement: true },
           (context) => context,
         );
 
-        const args: ExecutionArgs = {
+        const args: OperationArgs = {
           schema: await getGraphQLSchema(),
           contextValue: context,
           operationName: params.operationName,
@@ -138,7 +128,7 @@ const GraphQLSSEPlugin: PostGraphilePlugin = {
           {
             options,
             req,
-            res,
+            res: req.context,
             variables: args.variableValues,
             operationName: args.operationName,
           },
@@ -152,12 +142,12 @@ const GraphQLSSEPlugin: PostGraphilePlugin = {
 
         return args;
       },
-      async onNext(req, _args, result) {
+      async onNext(_ctx: undefined, req: Request<IncomingMessage, ServerResponse>, result) {
         if (result.errors) {
           result.errors = handleErrors(
             result.errors,
-            req,
-            resForReq.get(req)!, // should be always present
+            req.raw,
+            resForReq.get(req.raw)!, // should be always present
           );
           return result;
         }
@@ -214,9 +204,10 @@ const GraphQLSSEPlugin: PostGraphilePlugin = {
 
     resForReq.set(req, res);
     handler(
-      req,
-      res,
-      req.body, // when nullish, `graphql-sse` will read out the body vanilla Node style
+      {
+        raw: req,
+        context: res,
+      } as Request<IncomingMessage, ServerResponse>,
     )
       .then(() => {
         next();
@@ -280,4 +271,4 @@ function addCORSHeaders(res: ServerResponse) {
   );
 }
 
-export default GraphQLSSEPlugin;
+GraphQLSSEPlugin;

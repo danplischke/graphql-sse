@@ -46,15 +46,19 @@
     "prepack": "yarn build"
   },
   "peerDependencies": {
-    "graphql-sse": "^1.1.0",
-    "postgraphile": "^4.12.9"
+    "graphql-sse": "^2.5.3",
+    "postgraphile": "^4.13.0"
   },
   "devDependencies": {
-    "glob": "^8.0.1",
-    "graphql-sse": "^1.1.0",
-    "postgraphile": "^4.12.9",
-    "prettier": "^2.6.2",
-    "replacestream": "^4.0.3",
-    "typescript": "^4.6.3"
+    "glob": "^10.3.12",
+    "graphql-sse": "^2.5.3",
+    "postgraphile": "^4.13.0",
+    "prettier": "^3.2.5",
+    "replacestream": "^4.0.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "ws": "^8.16.0"
   }
 }
