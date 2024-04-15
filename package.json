@@ -1,6 +1,6 @@
 {
   "name": "@graphile-contrib/graphql-sse",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PostGraphile support for GraphQL over Server-Sent Events (SSE) powered by graphql-sse",
   "keywords": [
     "sse",
